@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instituto Lima Norte — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy: #1B2A4A;
+  --navy-light: #253d6e;
+  --teal: #1E7B6B;
+  --teal-light: #2aaa95;
+  --teal-pale: #e1f5ee;
+  --gold: #C9962B;
+  --gold-pale: #fef3dc;
+  --red: #c0392b;
+  --red-pale: #fdecea;
+  --amber: #e67e22;
+  --amber-pale: #fef0e0;
+  --green: #27ae60;
+  --green-pale: #eafaf1;
+  --gray: #f4f5f7;
+  --gray-mid: #dde1e9;
+  --text: #1a1f2e;
+  --text-2: #4a5068;
+  --text-3: #8892a4;
+  --white: #ffffff;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #f0f2f7;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--navy);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-logo {
+  width: 32px; height: 32px;
+  background: var(--teal);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.header-logo svg { width: 18px; height: 18px; fill: white; }
+.header-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: white; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.last-update { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; }
+.btn-refresh {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.2s;
+}
+.btn-refresh:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Nav tabs ── */
+.nav-bar {
+  background: white;
+  border-bottom: 1px solid var(--gray-mid);
+  padding: 0 24px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.nav-tab {
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s;
+  user-select: none;
+}
+.nav-tab:hover { color: var(--navy); }
+.nav-tab.active { color: var(--navy); border-bottom-color: var(--teal); }
+
+/* ── Layout ── */
+.main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Loading ── */
+.loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 300px; gap: 16px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--gray-mid);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text-3); }
+
+/* ── Metric cards ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.metric-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--gray-mid);
+}
+.metric-card.accent-teal { border-top: 3px solid var(--teal); }
+.metric-card.accent-gold  { border-top: 3px solid var(--gold); }
+.metric-card.accent-red   { border-top: 3px solid var(--red); }
+.metric-card.accent-navy  { border-top: 3px solid var(--navy); }
+.metric-card.accent-green { border-top: 3px solid var(--green); }
+.metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+.metric-val { font-size: 28px; font-weight: 600; color: var(--text); line-height: 1; }
+.metric-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.metric-sub.good { color: var(--green); }
+.metric-sub.warn { color: var(--amber); }
+.metric-sub.bad  { color: var(--red); }
+
+/* ── Section headers ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+}
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 17px;
+  color: var(--navy);
+}
+.section-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+/* ── Progress bars (estacas) ── */
+.stake-list { display: flex; flex-direction: column; gap: 8px; }
+.stake-row {
+  background: white;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  border: 1px solid var(--gray-mid);
+}
+.stake-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.stake-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.stake-stats { display: flex; gap: 16px; align-items: center; }
+.stake-stat { font-size: 12px; color: var(--text-3); }
+.stake-stat span { font-weight: 600; color: var(--text); }
+.stake-badge {
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+}
+.badge-green { background: var(--green-pale); color: #1a7a42; }
+.badge-amber { background: var(--amber-pale); color: #a05a10; }
+.badge-red   { background: var(--red-pale);   color: #8b1a10; }
+.bar-track {
+  height: 6px; background: var(--gray);
+  border-radius: 3px; overflow: hidden;
+}
+.bar-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* ── Priority groups ── */
+.priority-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.priority-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--gray-mid);
+}
+.priority-title {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-3); margin-bottom: 12px;
+}
+.priority-numbers {
+  display: flex; justify-content: space-between; margin-bottom: 10px;
+}
+.pn-item { text-align: center; }
+.pn-val { font-size: 22px; font-weight: 600; color: var(--text); }
+.pn-label { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+.pn-val.green { color: var(--green); }
+.pn-val.red   { color: var(--red); }
+.pn-val.amber { color: var(--amber); }
+.mini-bar-track { height: 4px; background: var(--gray); border-radius: 2px; overflow: hidden; }
+.mini-bar-fill  { height: 100%; border-radius: 2px; background: var(--teal); }
+
+/* ── Alerts table ── */
+.table-wrap { background: white; border-radius: var(--radius); border: 1px solid var(--gray-mid); overflow: hidden; margin-bottom: 20px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-3);
+  background: var(--gray);
+  border-bottom: 1px solid var(--gray-mid);
+  white-space: nowrap;
+}
+.data-table th.sortable { cursor: pointer; user-select: none; }
+.data-table th.sortable:hover { color: var(--navy); }
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray);
+  color: var(--text);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #f8f9fc; }
+.status-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; margin-right: 6px; vertical-align: middle;
+}
+.dot-green { background: var(--green); }
+.dot-amber { background: var(--amber); }
+.dot-red   { background: var(--red); }
+
+/* ── Chart containers ── */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.chart-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--gray-mid);
+}
+.chart-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 16px; }
+.chart-wrap { position: relative; height: 200px; }
+
+/* ── Opportunity bar ── */
+.opp-bar {
+  display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 6px;
+}
+.opp-seg { height: 100%; transition: width 0.6s; }
+.opp-legend {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+}
+.opp-leg-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-3); }
+.opp-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ── Meta progress ── */
+.meta-card {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  color: white;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: center;
+}
+.meta-left {}
+.meta-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.meta-numbers { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+.meta-current { font-size: 40px; font-weight: 600; color: white; line-height: 1; }
+.meta-total { font-size: 16px; color: rgba(255,255,255,0.5); }
+.meta-track { height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; }
+.meta-fill  { height: 100%; border-radius: 4px; background: var(--teal-light); transition: width 0.8s ease; }
+.meta-right { text-align: right; }
+.meta-pct { font-size: 48px; font-weight: 700; color: var(--teal-light); line-height: 1; }
+.meta-pct-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+.meta-gap { font-size: 13px; color: var(--gold); margin-top: 8px; }
+
+/* ── Discrepancy note ── */
+.discrepancy {
+  background: var(--gold-pale);
+  border: 1px solid #e8c068;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #7a5a10;
+  margin-bottom: 16px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.discrepancy svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ── Trend page ── */
+.trend-controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.trend-btn {
+  padding: 6px 14px; font-size: 12px; font-weight: 500;
+  border-radius: 20px; cursor: pointer;
+  border: 1px solid var(--gray-mid);
+  background: white; color: var(--text-2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.trend-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+}
+.filter-bar select {
+  padding: 7px 12px; font-size: 13px;
+  border: 1px solid var(--gray-mid); border-radius: var(--radius-sm);
+  background: white; color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+.filter-label { font-size: 12px; color: var(--text-3); }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .main { padding: 12px 14px; }
+  .header { padding: 0 14px; }
+  .header-title { font-size: 14px; }
+  .nav-bar { padding: 0 14px; }
+  .nav-tab { padding: 12px 12px; font-size: 12px; }
+  .meta-card { grid-template-columns: 1fr; }
+  .meta-right { text-align: left; }
+  .cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Empty state ── */
+.empty { text-align: center; padding: 40px; color: var(--text-3); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="header-title">Instituto Lima Norte</div>
+      <div class="header-sub">Dashboard de coordinación · S&amp;I</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="last-update" id="last-update">Cargando...</div>
+    <button class="btn-refresh" onclick="loadAll()">↺ Actualizar</button>
+  </div>
+</header>
+
+<nav class="nav-bar">
+  <div class="nav-tab active" onclick="showPage('resumen', this)">Resumen</div>
+  <div class="nav-tab" onclick="showPage('estacas', this)">Estacas</div>
+  <div class="nav-tab" onclick="showPage('barrios', this)">Barrios</div>
+  <div class="nav-tab" onclick="showPage('prioridad', this)">Grupos prioritarios</div>
+  <div class="nav-tab" onclick="showPage('tendencia', this)">Tendencia</div>
+</nav>
+
+<main class="main">
+
+<!-- ══ RESUMEN ══════════════════════════════════════════════════════════ -->
+<div id="page-resumen" class="page active">
+  <div class="loading" id="loading-resumen">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando datos...</div>
+  </div>
+  <div id="content-resumen" style="display:none">
+
+    <div id="meta-block"></div>
+    <div id="discrepancy-block"></div>
+    <div id="kpi-block" class="cards-grid"></div>
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">Oportunidad por estaca</div>
+        <div class="section-sub">Matriculados actuales vs. oportunidad real de crecimiento</div>
+      </div>
+    </div>
+    <div id="stakes-overview" class="stake-list"></div>
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">Alertas</div>
+        <div class="section-sub">Estacas que requieren atención inmediata</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Estaca</th>
+            <th>Matriculados</th>
+            <th>Asistencia</th>
+            <th>Oportunidad</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="alerts-table"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ESTACAS ══════════════════════════════════════════════════════════ -->
+<div id="page-estacas" class="page">
+  <div class="loading" id="loading-estacas">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando estacas...</div>
+  </div>
+  <div id="content-estacas" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Comparativo de estacas</div>
+        <div class="section-sub">Todas las métricas · última carga</div>
+      </div>
+    </div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table class="data-table" id="stakes-table">
+        <thead>
+          <tr>
+            <th class="sortable" onclick="sortTable('stakes-table',0)">Estaca</th>
+            <th class="sortable" onclick="sortTable('stakes-table',1)">Total</th>
+            <th class="sortable" onclick="sortTable('stakes-table',2)">Matr.</th>
+            <th class="sortable" onclick="sortTable('stakes-table',3)">% matr.</th>
+            <th class="sortable" onclick="sortTable('stakes-table',4)">Asist.</th>
+            <th class="sortable" onclick="sortTable('stakes-table',5)">RC total</th>
+            <th class="sortable" onclick="sortTable('stakes-table',6)">RC en IN</th>
+            <th class="sortable" onclick="sortTable('stakes-table',7)">MR total</th>
+            <th class="sortable" onclick="sortTable('stakes-table',8)">MR en IN</th>
+            <th class="sortable" onclick="sortTable('stakes-table',9)">Egr.Sem</th>
+            <th class="sortable" onclick="sortTable('stakes-table',10)">En misión</th>
+            <th class="sortable" onclick="sortTable('stakes-table',11)">Oportunidad</th>
+          </tr>
+        </thead>
+        <tbody id="stakes-table-body"></tbody>
+      </table>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">Matriculados por estaca</div>
+        <div class="chart-wrap"><canvas id="chart-stakes-enrolled"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Oportunidad de crecimiento por estaca</div>
+        <div class="chart-wrap"><canvas id="chart-stakes-opp"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BARRIOS ══════════════════════════════════════════════════════════ -->
+<div id="page-barrios" class="page">
+  <div class="loading" id="loading-barrios">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando barrios...</div>
+  </div>
+  <div id="content-barrios" style="display:none">
+    <div class="filter-bar">
+      <span class="filter-label">Filtrar por estaca:</span>
+      <select id="filter-stake" onchange="renderBarrios()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table class="data-table" id="barrios-table">
+        <thead>
+          <tr>
+            <th>Barrio</th>
+            <th class="sortable" onclick="sortTable('barrios-table',1)">Total</th>
+            <th class="sortable" onclick="sortTable('barrios-table',2)">Matr.</th>
+            <th class="sortable" onclick="sortTable('barrios-table',3)">% matr.</th>
+            <th class="sortable" onclick="sortTable('barrios-table',4)">Asist.</th>
+            <th class="sortable" onclick="sortTable('barrios-table',5)">RC</th>
+            <th class="sortable" onclick="sortTable('barrios-table',6)">MR</th>
+            <th class="sortable" onclick="sortTable('barrios-table',7)">Egr.Sem</th>
+            <th class="sortable" onclick="sortTable('barrios-table',8)">Oportunidad</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="barrios-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GRUPOS PRIORITARIOS ══════════════════════════════════════════════ -->
+<div id="page-prioridad" class="page">
+  <div class="loading" id="loading-prioridad">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando grupos prioritarios...</div>
+  </div>
+  <div id="content-prioridad" style="display:none">
+    <div id="priority-cards" class="priority-grid"></div>
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">Desglose por estaca</div>
+        <div class="section-sub">Grupos prioritarios sin matricular — mayor a menor oportunidad</div>
+      </div>
+    </div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Estaca</th>
+            <th>RC sin IN</th>
+            <th>MR sin IN</th>
+            <th>Egr. Sem. sin IN</th>
+            <th>Total oportunidad</th>
+          </tr>
+        </thead>
+        <tbody id="priority-stakes-body"></tbody>
+      </table>
+    </div>
+
+    <div class="section-header">
+      <div><div class="section-title">Composición del universo</div></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">Distribución por género</div>
+        <div class="chart-wrap"><canvas id="chart-gender"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Distribución etaria</div>
+        <div class="chart-wrap"><canvas id="chart-age"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TENDENCIA ════════════════════════════════════════════════════════ -->
+<div id="page-tendencia" class="page">
+  <div class="loading" id="loading-tendencia">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando historial...</div>
+  </div>
+  <div id="content-tendencia" style="display:none">
+    <div class="trend-controls" id="trend-controls">
+      <button class="trend-btn active" onclick="setTrendMetric('matriculados', this)">Matriculados</button>
+      <button class="trend-btn" onclick="setTrendMetric('pct_matric', this)">% matrícula</button>
+      <button class="trend-btn" onclick="setTrendMetric('rc_total', this)">RC total</button>
+      <button class="trend-btn" onclick="setTrendMetric('mr_total', this)">MR total</button>
+      <button class="trend-btn" onclick="setTrendMetric('sem_total', this)">Egr. Sem.</button>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title" id="trend-title">Evolución de matriculados — Lima Norte</div>
+      <div style="position:relative; height:280px"><canvas id="chart-trend"></canvas></div>
+    </div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Matriculados</th>
+            <th>% matr.</th>
+            <th>Asist. prom.</th>
+            <th>RC total</th>
+            <th>MR total</th>
+            <th>Egr. Sem.</th>
+            <th>En misión</th>
+          </tr>
+        </thead>
+        <tbody id="history-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+const SHEET_ID_PUB = '2PACX-1vQuBzJ_QPldy64vnYpbUzt15sLswXKzjpF5vfAsYwbwZQkf1nfByIG7ue-c5rsHSUTRE3nzMkIr846P';
+const GIDS = {
+  config:   '1039374974',
+  historico:'1330149337',
+  estacas:  '1499203287',
+  barrios:  '1022390386',
+};
+
+function csvUrl(gid) {
+  return `https://docs.google.com/spreadsheets/d/e/${SHEET_ID_PUB}/pub?gid=${gid}&single=true&output=csv`;
+}
+
+async function fetchCSV(gid) {
+  const r = await fetch(csvUrl(gid));
+  if (!r.ok) throw new Error('Error al leer hoja ' + gid);
+  const text = await r.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const cells = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cells.push(cur.trim());
+    return cells;
+  });
+}
+
+// ── State ──
+let DATA = { config: {}, historico: [], estacas: [], barrios: [] };
+let trendMetric = 'matriculados';
+let trendChart = null, genderChart = null, ageChart = null;
+let stakesEnrolledChart = null, stakesOppChart = null;
+
+// ── Load all ──
+async function loadAll() {
+  try {
+    const [cfgRaw, histRaw, estRaw, barrRaw] = await Promise.all([
+      fetchCSV(GIDS.config),
+      fetchCSV(GIDS.historico),
+      fetchCSV(GIDS.estacas),
+      fetchCSV(GIDS.barrios),
+    ]);
+
+    // Parse CONFIG (col B = key, col C = value)
+    DATA.config = {};
+    cfgRaw.forEach(row => {
+      if (row[1] && row[2] !== undefined) DATA.config[row[1].trim()] = row[2].trim();
+    });
+
+    // Parse HISTORICO (skip rows until we find a date in col A)
+    DATA.historico = histRaw.filter(r => r[0] && /\d{4}/.test(r[0]) && r[2] && !isNaN(parseFloat(r[2]))).map(parseHistRow);
+
+    // Parse ESTACAS — last 10 unique stakes (most recent load)
+    const allEstacas = estRaw.filter(r => r[0] && /\d{4}/.test(r[0]) && r[2] && !isNaN(parseFloat(r[2]))).map(parseHistRow);
+    if (allEstacas.length > 0) {
+      const lastDate = allEstacas[allEstacas.length - 1].fecha;
+      DATA.estacas = allEstacas.filter(r => r.fecha === lastDate);
+    }
+
+    // Parse BARRIOS
+    DATA.barrios = barrRaw.filter(r => r[0] && /\d{4}/.test(r[0]) && r[2] && !isNaN(parseFloat(r[2]))).map(parseHistRow);
+
+    const lastFecha = DATA.historico.length ? DATA.historico[DATA.historico.length-1].fecha : '—';
+    document.getElementById('last-update').textContent = 'Última carga: ' + lastFecha;
+
+    renderResumen();
+    renderEstacas();
+    renderBarrios();
+    renderPrioridad();
+    renderTendencia();
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('last-update').textContent = 'Error al cargar';
+  }
+}
+
+function parseHistRow(r) {
+  return {
+    fecha:        r[0] || '',
+    alcance:      r[1] || '',
+    total:        num(r[2]),
+    wards:        num(r[3]),
+    matriculados: num(r[4]),
+    pct_matric:   pct(r[5]),
+    potenciales:  num(r[6]),
+    asist_prom:   pct(r[7]),
+    asist70:      num(r[8]),
+    rc_total:     num(r[9]),
+    rc_in:        num(r[10]),
+    rc_oport:     num(r[11]),
+    mr_total:     num(r[12]),
+    mr_in:        num(r[13]),
+    mr_oport:     num(r[14]),
+    sem_total:    num(r[15]),
+    sem_in:       num(r[16]),
+    sem_oport:    num(r[17]),
+    en_mision:    num(r[18]),
+    recuperables: num(r[19]),
+    varones:      num(r[20]),
+    varones_m:    num(r[21]),
+    mujeres:      num(r[22]),
+    mujeres_m:    num(r[23]),
+    edad17_25:    num(r[24]),
+    edad25_35:    num(r[25]),
+    cred_14mas:   num(r[26]),
+    cred_menos14: num(r[27]),
+    meta:         num(r[28]),
+    pct_meta:     pct(r[29]),
+  };
+}
+
+function num(v) { const n = parseFloat(String(v).replace(',','')); return isNaN(n) ? 0 : Math.round(n); }
+function pct(v) {
+  let s = String(v || '').replace('%','').replace(',','.');
+  let n = parseFloat(s);
+  if (isNaN(n)) return 0;
+  return n > 1 ? Math.round(n * 10) / 10 : Math.round(n * 1000) / 10;
+}
+function fmtPct(v) { return v.toFixed(1) + '%'; }
+function oportunidad(r) { return r.rc_oport + r.mr_oport + r.sem_oport + r.recuperables; }
+
+// ══ RESUMEN ══════════════════════════════════════════════════════════════
+function renderResumen() {
+  const latest = DATA.historico.length ? DATA.historico[DATA.historico.length-1] : null;
+  if (!latest) { show('resumen'); return; }
+
+  const meta       = parseInt(DATA.config.meta_matricula) || 1837;
+  const oficial    = parseInt(DATA.config.matriculados_oficial) || 0;
+  const pctMeta    = ((latest.matriculados / meta) * 100).toFixed(1);
+  const faltan     = meta - latest.matriculados;
+
+  // Meta block
+  document.getElementById('meta-block').innerHTML = `
+    <div class="meta-card">
+      <div class="meta-left">
+        <div class="meta-label">Progreso hacia meta anual ${DATA.config.anio_academico || '2026'}</div>
+        <div class="meta-numbers">
+          <span class="meta-current">${latest.matriculados.toLocaleString()}</span>
+          <span class="meta-total">/ ${meta.toLocaleString()} meta</span>
+        </div>
+        <div class="meta-track">
+          <div class="meta-fill" style="width:${Math.min(pctMeta,100)}%"></div>
+        </div>
+        <div class="meta-gap" style="margin-top:8px">Faltan ${faltan.toLocaleString()} personas para cumplir la meta</div>
+      </div>
+      <div class="meta-right">
+        <div class="meta-pct">${pctMeta}%</div>
+        <div class="meta-pct-label">de la meta cumplida</div>
+      </div>
+    </div>`;
+
+  // Discrepancy note
+  if (oficial > 0) {
+    const diff = oficial - latest.matriculados;
+    document.getElementById('discrepancy-block').innerHTML = `
+      <div class="discrepancy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>El reporte oficial del área indica <strong>${oficial.toLocaleString()}</strong> matriculados. Este dashboard calcula <strong>${latest.matriculados.toLocaleString()}</strong> desde el export. Diferencia: <strong>+${diff}</strong>. Fuente: ${DATA.config.nota_reporte || 'S&I'} · ${DATA.config.fecha_reporte_oficial || '—'}</span>
+      </div>`;
+  }
+
+  // KPIs
+  const oppTotal = oportunidad(latest);
+  document.getElementById('kpi-block').innerHTML = `
+    <div class="metric-card accent-teal">
+      <div class="metric-label">Universo total</div>
+      <div class="metric-val">${latest.total.toLocaleString()}</div>
+      <div class="metric-sub">${latest.wards} wards · ≥17 años</div>
+    </div>
+    <div class="metric-card accent-gold">
+      <div class="metric-label">Asistencia promedio</div>
+      <div class="metric-val">${fmtPct(latest.asist_prom)}</div>
+      <div class="metric-sub ${latest.asist_prom >= 70 ? 'good' : latest.asist_prom >= 60 ? 'warn' : 'bad'}">${latest.asist70} con ≥70%</div>
+    </div>
+    <div class="metric-card accent-red">
+      <div class="metric-label">Potenciales sin matricular</div>
+      <div class="metric-val">${latest.potenciales.toLocaleString()}</div>
+      <div class="metric-sub bad">Candidatos elegibles</div>
+    </div>
+    <div class="metric-card accent-navy">
+      <div class="metric-label">En misión</div>
+      <div class="metric-val">${latest.en_mision.toLocaleString()}</div>
+      <div class="metric-sub">Regresarán próximamente</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Oportunidad total</div>
+      <div class="metric-val">${oppTotal.toLocaleString()}</div>
+      <div class="metric-sub warn">RC + MR + Egr. + Recup.</div>
+    </div>`;
+
+  // Stakes overview
+  const stakesSorted = [...DATA.estacas].sort((a,b) => oportunidad(b) - oportunidad(a));
+  document.getElementById('stakes-overview').innerHTML = stakesSorted.map(s => {
+    const opp = oportunidad(s);
+    const ratio = opp > 0 ? Math.round((s.matriculados / (s.matriculados + opp)) * 100) : 100;
+    const color = ratio >= 60 ? '#27ae60' : ratio >= 40 ? '#e67e22' : '#c0392b';
+    const badge = ratio >= 60 ? 'badge-green' : ratio >= 40 ? 'badge-amber' : 'badge-red';
+    const estado = ratio >= 60 ? 'Avanzando' : ratio >= 40 ? 'Atención' : 'Crítico';
+    return `
+      <div class="stake-row">
+        <div class="stake-head">
+          <span class="stake-name">${s.alcance}</span>
+          <div class="stake-stats">
+            <span class="stake-stat"><span>${s.matriculados}</span> matr.</span>
+            <span class="stake-stat"><span>${opp}</span> oport.</span>
+            <span class="stake-badge ${badge}">${estado}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <div class="bar-track" style="flex:1">
+            <div class="bar-fill" style="width:${ratio}%;background:${color}"></div>
+          </div>
+          <span style="font-size:11px;color:var(--text-3);min-width:36px;text-align:right">${ratio}% captado</span>
+        </div>
+        <div class="opp-bar" style="margin-top:6px">
+          <div class="opp-seg" style="width:${opp>0?Math.round(s.rc_oport/opp*100):0}%;background:#e74c3c"></div>
+          <div class="opp-seg" style="width:${opp>0?Math.round(s.mr_oport/opp*100):0}%;background:#3498db"></div>
+          <div class="opp-seg" style="width:${opp>0?Math.round(s.sem_oport/opp*100):0}%;background:#f39c12"></div>
+          <div class="opp-seg" style="width:${opp>0?Math.round(s.recuperables/opp*100):0}%;background:#9b59b6"></div>
+        </div>
+        <div class="opp-legend">
+          <div class="opp-leg-item"><div class="opp-dot" style="background:#e74c3c"></div>RC sin IN (${s.rc_oport})</div>
+          <div class="opp-leg-item"><div class="opp-dot" style="background:#3498db"></div>MR sin IN (${s.mr_oport})</div>
+          <div class="opp-leg-item"><div class="opp-dot" style="background:#f39c12"></div>Egr. Sem. sin IN (${s.sem_oport})</div>
+          <div class="opp-leg-item"><div class="opp-dot" style="background:#9b59b6"></div>Recuperables (${s.recuperables})</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Alerts table
+  const alertStakes = [...DATA.estacas].sort((a,b) => a.asist_prom - b.asist_prom);
+  document.getElementById('alerts-table').innerHTML = alertStakes.map(s => {
+    const opp = oportunidad(s);
+    const asistColor = s.asist_prom < 60 ? 'color:var(--red)' : s.asist_prom < 70 ? 'color:var(--amber)' : 'color:var(--green)';
+    const dotClass = s.asist_prom < 60 ? 'dot-red' : s.asist_prom < 70 ? 'dot-amber' : 'dot-green';
+    const badge = s.asist_prom < 60 ? 'badge-red' : s.asist_prom < 70 ? 'badge-amber' : 'badge-green';
+    const estado = s.asist_prom < 60 ? 'Atención urgente' : s.asist_prom < 70 ? 'Monitorear' : 'Normal';
+    return `<tr>
+      <td><span class="status-dot ${dotClass}"></span>${s.alcance}</td>
+      <td>${s.matriculados}</td>
+      <td style="${asistColor};font-weight:500">${fmtPct(s.asist_prom)}</td>
+      <td>${opp.toLocaleString()}</td>
+      <td><span class="stake-badge ${badge}">${estado}</span></td>
+    </tr>`;
+  }).join('');
+
+  show('resumen');
+}
+
+// ══ ESTACAS ═══════════════════════════════════════════════════════════════
+function renderEstacas() {
+  const sorted = [...DATA.estacas].sort((a,b) => oportunidad(b) - oportunidad(a));
+  document.getElementById('stakes-table-body').innerHTML = sorted.map(s => {
+    const opp = oportunidad(s);
+    return `<tr>
+      <td style="font-weight:500">${s.alcance}</td>
+      <td>${s.total.toLocaleString()}</td>
+      <td>${s.matriculados}</td>
+      <td>${fmtPct(s.pct_matric)}</td>
+      <td>${fmtPct(s.asist_prom)}</td>
+      <td>${s.rc_total}</td>
+      <td>${s.rc_in}</td>
+      <td>${s.mr_total}</td>
+      <td>${s.mr_in}</td>
+      <td>${s.sem_total}</td>
+      <td>${s.en_mision}</td>
+      <td style="font-weight:600;color:var(--teal)">${opp}</td>
+    </tr>`;
+  }).join('');
+
+  // Charts
+  const labels = sorted.map(s => s.alcance.replace(' Stake','').replace('Lima Perú ',''));
+  const enrolled = sorted.map(s => s.matriculados);
+  const opps = sorted.map(s => oportunidad(s));
+
+  if (stakesEnrolledChart) stakesEnrolledChart.destroy();
+  stakesEnrolledChart = new Chart(document.getElementById('chart-stakes-enrolled'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Matriculados', data: enrolled, backgroundColor: '#1E7B6B', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  if (stakesOppChart) stakesOppChart.destroy();
+  stakesOppChart = new Chart(document.getElementById('chart-stakes-opp'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'RC sin IN',       data: sorted.map(s=>s.rc_oport),     backgroundColor: '#e74c3c', borderRadius: 2 },
+        { label: 'MR sin IN',       data: sorted.map(s=>s.mr_oport),     backgroundColor: '#3498db', borderRadius: 2 },
+        { label: 'Egr. Sem. sin IN',data: sorted.map(s=>s.sem_oport),    backgroundColor: '#f39c12', borderRadius: 2 },
+        { label: 'Recuperables',    data: sorted.map(s=>s.recuperables), backgroundColor: '#9b59b6', borderRadius: 2 },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+  });
+
+  show('estacas');
+}
+
+// ══ BARRIOS ═══════════════════════════════════════════════════════════════
+function renderBarrios() {
+  // Populate filter
+  const sel = document.getElementById('filter-stake');
+  if (sel.options.length <= 1) {
+    const stakes = [...new Set(DATA.barrios.map(b => b.alcance.split(' > ')[0]))].sort();
+    stakes.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  }
+
+  const filterVal = sel.value;
+  const filtered = filterVal ? DATA.barrios.filter(b => b.alcance.startsWith(filterVal)) : DATA.barrios;
+  const sorted = [...filtered].sort((a,b) => oportunidad(b) - oportunidad(a));
+
+  document.getElementById('barrios-table-body').innerHTML = sorted.map(b => {
+    const opp = oportunidad(b);
+    const parts = b.alcance.split(' > ');
+    const barrio = parts[1] || b.alcance;
+    const estaca = parts[0] || '';
+    const badge = b.asist_prom < 60 ? 'badge-red' : b.asist_prom < 70 ? 'badge-amber' : 'badge-green';
+    const estado = b.asist_prom < 60 ? '⚠ Asist. baja' : opp > b.matriculados * 2 ? '↑ Alta oport.' : '✓ Normal';
+    return `<tr>
+      <td><div style="font-weight:500">${barrio}</div><div style="font-size:11px;color:var(--text-3)">${estaca}</div></td>
+      <td>${b.total}</td>
+      <td>${b.matriculados}</td>
+      <td>${fmtPct(b.pct_matric)}</td>
+      <td>${fmtPct(b.asist_prom)}</td>
+      <td>${b.rc_total}</td>
+      <td>${b.mr_total}</td>
+      <td>${b.sem_total}</td>
+      <td style="font-weight:600;color:var(--teal)">${opp}</td>
+      <td><span class="stake-badge ${badge}">${estado}</span></td>
+    </tr>`;
+  }).join('');
+
+  show('barrios');
+}
+
+// ══ PRIORIDAD ═════════════════════════════════════════════════════════════
+function renderPrioridad() {
+  const latest = DATA.historico.length ? DATA.historico[DATA.historico.length-1] : null;
+  if (!latest) { show('prioridad'); return; }
+
+  const cards = [
+    { title: 'Recién conversos (RC)', total: latest.rc_total, en_in: latest.rc_in, oport: latest.rc_oport, color: '#e74c3c', desc: 'Bautizados últimos 365 días' },
+    { title: 'Misioneros retornados (MR)', total: latest.mr_total, en_in: latest.mr_in, oport: latest.mr_oport, color: '#3498db', desc: 'Liberados últimos 365 días' },
+    { title: 'Egresados de Seminario', total: latest.sem_total, en_in: latest.sem_in, oport: latest.sem_oport, color: '#f39c12', desc: '17-18 años con créditos Sem.' },
+    { title: 'Recuperables 2025', total: latest.recuperables, en_in: 0, oport: latest.recuperables, color: '#9b59b6', desc: 'Last attended en 2025, no activos' },
+  ];
+
+  document.getElementById('priority-cards').innerHTML = cards.map(c => `
+    <div class="priority-card">
+      <div class="priority-title" style="color:${c.color}">${c.title}</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:10px">${c.desc}</div>
+      <div class="priority-numbers">
+        <div class="pn-item"><div class="pn-val">${c.total}</div><div class="pn-label">Total</div></div>
+        ${c.en_in > 0 ? `<div class="pn-item"><div class="pn-val green">${c.en_in}</div><div class="pn-label">En IN</div></div>` : ''}
+        <div class="pn-item"><div class="pn-val red">${c.oport}</div><div class="pn-label">Sin matricular</div></div>
+      </div>
+      <div class="mini-bar-track">
+        <div class="mini-bar-fill" style="width:${c.total>0?Math.round(c.en_in/c.total*100):0}%;background:${c.color}"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:4px">${c.total>0?Math.round(c.en_in/c.total*100):0}% captados en Instituto</div>
+    </div>`).join('');
+
+  // Desglose por estaca
+  const stakesSorted = [...DATA.estacas].sort((a,b) => (b.rc_oport+b.mr_oport+b.sem_oport) - (a.rc_oport+a.mr_oport+a.sem_oport));
+  document.getElementById('priority-stakes-body').innerHTML = stakesSorted.map(s => `
+    <tr>
+      <td style="font-weight:500">${s.alcance}</td>
+      <td style="color:#e74c3c">${s.rc_oport}</td>
+      <td style="color:#3498db">${s.mr_oport}</td>
+      <td style="color:#f39c12">${s.sem_oport}</td>
+      <td style="font-weight:600">${s.rc_oport+s.mr_oport+s.sem_oport}</td>
+    </tr>`).join('');
+
+  // Género chart
+  if (genderChart) genderChart.destroy();
+  genderChart = new Chart(document.getElementById('chart-gender'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Varones', 'Mujeres'],
+      datasets: [{
+        data: [latest.varones, latest.mujeres],
+        backgroundColor: ['#1B2A4A', '#1E7B6B'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${Math.round(ctx.raw/(latest.varones+latest.mujeres)*100)}%)` } }
+      }
+    }
+  });
+
+  // Edad chart
+  if (ageChart) ageChart.destroy();
+  ageChart = new Chart(document.getElementById('chart-age'), {
+    type: 'bar',
+    data: {
+      labels: ['17-25 años', '25-35 años', 'Otros'],
+      datasets: [{
+        data: [latest.edad17_25, latest.edad25_35, latest.total - latest.edad17_25 - latest.edad25_35],
+        backgroundColor: ['#1E7B6B', '#C9962B', '#8892a4'],
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  show('prioridad');
+}
+
+// ══ TENDENCIA ══════════════════════════════════════════════════════════════
+function setTrendMetric(metric, btn) {
+  trendMetric = metric;
+  document.querySelectorAll('.trend-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTendencia();
+}
+
+function renderTendencia() {
+  const data = DATA.historico.filter(r => r.alcance.toLowerCase().includes('total') || r.alcance === '');
+  if (!data.length) { show('tendencia'); return; }
+
+  const labels = data.map(r => r.fecha);
+  const metricLabels = {
+    matriculados: 'Matriculados', pct_matric: '% matrícula',
+    rc_total: 'RC total', mr_total: 'MR total', sem_total: 'Egr. Sem.'
+  };
+  const values = data.map(r => trendMetric === 'pct_matric' ? r.pct_matric : r[trendMetric]);
+  const meta = parseInt(DATA.config.meta_matricula) || 1837;
+
+  document.getElementById('trend-title').textContent = `Evolución · ${metricLabels[trendMetric]} — Lima Norte`;
+
+  if (trendChart) trendChart.destroy();
+  const datasets = [{
+    label: metricLabels[trendMetric],
+    data: values,
+    borderColor: '#1E7B6B',
+    backgroundColor: 'rgba(30,123,107,0.08)',
+    fill: true,
+    tension: 0.3,
+    pointBackgroundColor: '#1E7B6B',
+    pointRadius: 4,
+  }];
+  if (trendMetric === 'matriculados') {
+    datasets.push({ label: 'Meta', data: data.map(() => meta), borderColor: '#C9962B', borderDash: [6,4], pointRadius: 0, fill: false });
+  }
+
+  trendChart = new Chart(document.getElementById('chart-trend'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { beginAtZero: false } }
+    }
+  });
+
+  // History table
+  document.getElementById('history-table-body').innerHTML = [...data].reverse().map(r => `
+    <tr>
+      <td>${r.fecha}</td>
+      <td>${r.total.toLocaleString()}</td>
+      <td style="font-weight:500">${r.matriculados.toLocaleString()}</td>
+      <td>${fmtPct(r.pct_matric)}</td>
+      <td>${fmtPct(r.asist_prom)}</td>
+      <td>${r.rc_total}</td>
+      <td>${r.mr_total}</td>
+      <td>${r.sem_total}</td>
+      <td>${r.en_mision}</td>
+    </tr>`).join('');
+
+  show('tendencia');
+}
+
+// ── Helpers ──
+function show(page) {
+  document.getElementById('loading-' + page).style.display = 'none';
+  document.getElementById('content-' + page).style.display = 'block';
+}
+
+function showPage(name, tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  tab.classList.add('active');
+}
+
+function sortTable(tableId, col) {
+  const tbody = document.getElementById(tableId).querySelector('tbody') ||
+                document.getElementById(tableId + '-body');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const asc = tbody.dataset.sortCol == col && tbody.dataset.sortDir === 'asc';
+  rows.sort((a,b) => {
+    const av = a.cells[col]?.textContent.replace(/[%,]/g,'').trim() || '';
+    const bv = b.cells[col]?.textContent.replace(/[%,]/g,'').trim() || '';
+    const an = parseFloat(av), bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) return asc ? an-bn : bn-an;
+    return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  tbody.dataset.sortCol = col;
+  tbody.dataset.sortDir = asc ? 'desc' : 'asc';
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// ── Init ──
+loadAll();
+</script>
+</body>
+</html>
