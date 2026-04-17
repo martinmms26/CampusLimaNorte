@@ -284,7 +284,7 @@ body {
 .opp-legend {
   display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
 }
-.opp-leg-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-3); }
+.opp-leg-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); font-weight: 500; }
 .opp-dot { width: 8px; height: 8px; border-radius: 2px; }
 
 /* ── Meta progress ── */
@@ -726,12 +726,23 @@ function parseHistRow(r) {
   };
 }
 
-function num(v) { const n = parseFloat(String(v).replace(',','')); return isNaN(n) ? 0 : Math.round(n); }
+function num(v) {
+  // Remove thousands separators (both . and , used in Spanish locale) then parse
+  let s = String(v || '').replace(/\./g, '').replace(',', '');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : Math.round(n);
+}
 function pct(v) {
-  let s = String(v || '').replace('%','').replace(',','.');
-  let n = parseFloat(s);
+  // Sheets exports percentages as "0.71" (decimal) or "71%" or "71.0%"
+  let s = String(v || '').trim();
+  const hasPercent = s.includes('%');
+  s = s.replace('%','').replace(',','.').trim();
+  const n = parseFloat(s);
   if (isNaN(n)) return 0;
-  return n > 1 ? Math.round(n * 10) / 10 : Math.round(n * 1000) / 10;
+  // If value came with % sign it's already in percentage form (e.g. 71.0)
+  // If no % sign and value <= 1, it's a decimal (e.g. 0.71) → multiply by 100
+  if (hasPercent) return Math.round(n * 10) / 10;
+  return n <= 1 ? Math.round(n * 1000) / 10 : Math.round(n * 10) / 10;
 }
 function fmtPct(v) { return v.toFixed(1) + '%'; }
 function oportunidad(r) { return r.rc_oport + r.mr_oport + r.sem_oport + r.recuperables; }
@@ -741,8 +752,8 @@ function renderResumen() {
   const latest = DATA.historico.length ? DATA.historico[DATA.historico.length-1] : null;
   if (!latest) { show('resumen'); return; }
 
-  const meta       = parseInt(DATA.config.meta_matricula) || 1837;
-  const oficial    = parseInt(DATA.config.matriculados_oficial) || 0;
+  const meta       = parseInt(String(DATA.config.meta_matricula || '1837').replace(/\./g,'').replace(',','')) || 1837;
+  const oficial    = parseInt(String(DATA.config.matriculados_oficial || '0').replace(/\./g,'').replace(',','')) || 0;
   const pctMeta    = ((latest.matriculados / meta) * 100).toFixed(1);
   const faltan     = meta - latest.matriculados;
 
@@ -830,13 +841,13 @@ function renderResumen() {
           <span style="font-size:11px;color:var(--text-3);min-width:36px;text-align:right">${ratio}% captado</span>
         </div>
         <div class="opp-bar" style="margin-top:6px">
-          <div class="opp-seg" style="width:${opp>0?Math.round(s.rc_oport/opp*100):0}%;background:#e74c3c"></div>
+          <div class="opp-seg" style="width:${opp>0?Math.round(s.rc_oport/opp*100):0}%;background:#e8816e"></div>
           <div class="opp-seg" style="width:${opp>0?Math.round(s.mr_oport/opp*100):0}%;background:#3498db"></div>
           <div class="opp-seg" style="width:${opp>0?Math.round(s.sem_oport/opp*100):0}%;background:#f39c12"></div>
           <div class="opp-seg" style="width:${opp>0?Math.round(s.recuperables/opp*100):0}%;background:#9b59b6"></div>
         </div>
         <div class="opp-legend">
-          <div class="opp-leg-item"><div class="opp-dot" style="background:#e74c3c"></div>RC sin IN (${s.rc_oport})</div>
+          <div class="opp-leg-item"><div class="opp-dot" style="background:#e8816e"></div>RC sin IN (${s.rc_oport})</div>
           <div class="opp-leg-item"><div class="opp-dot" style="background:#3498db"></div>MR sin IN (${s.mr_oport})</div>
           <div class="opp-leg-item"><div class="opp-dot" style="background:#f39c12"></div>Egr. Sem. sin IN (${s.sem_oport})</div>
           <div class="opp-leg-item"><div class="opp-dot" style="background:#9b59b6"></div>Recuperables (${s.recuperables})</div>
@@ -903,7 +914,7 @@ function renderEstacas() {
     data: {
       labels,
       datasets: [
-        { label: 'RC sin IN',       data: sorted.map(s=>s.rc_oport),     backgroundColor: '#e74c3c', borderRadius: 2 },
+        { label: 'RC sin IN',       data: sorted.map(s=>s.rc_oport),     backgroundColor: '#e8816e', borderRadius: 2 },
         { label: 'MR sin IN',       data: sorted.map(s=>s.mr_oport),     backgroundColor: '#3498db', borderRadius: 2 },
         { label: 'Egr. Sem. sin IN',data: sorted.map(s=>s.sem_oport),    backgroundColor: '#f39c12', borderRadius: 2 },
         { label: 'Recuperables',    data: sorted.map(s=>s.recuperables), backgroundColor: '#9b59b6', borderRadius: 2 },
@@ -958,7 +969,7 @@ function renderPrioridad() {
   if (!latest) { show('prioridad'); return; }
 
   const cards = [
-    { title: 'Recién conversos (RC)', total: latest.rc_total, en_in: latest.rc_in, oport: latest.rc_oport, color: '#e74c3c', desc: 'Bautizados últimos 365 días' },
+    { title: 'Recién conversos (RC)', total: latest.rc_total, en_in: latest.rc_in, oport: latest.rc_oport, color: '#e8816e', desc: 'Bautizados últimos 365 días' },
     { title: 'Misioneros retornados (MR)', total: latest.mr_total, en_in: latest.mr_in, oport: latest.mr_oport, color: '#3498db', desc: 'Liberados últimos 365 días' },
     { title: 'Egresados de Seminario', total: latest.sem_total, en_in: latest.sem_in, oport: latest.sem_oport, color: '#f39c12', desc: '17-18 años con créditos Sem.' },
     { title: 'Recuperables 2025', total: latest.recuperables, en_in: 0, oport: latest.recuperables, color: '#9b59b6', desc: 'Last attended en 2025, no activos' },
@@ -984,7 +995,7 @@ function renderPrioridad() {
   document.getElementById('priority-stakes-body').innerHTML = stakesSorted.map(s => `
     <tr>
       <td style="font-weight:500">${s.alcance}</td>
-      <td style="color:#e74c3c">${s.rc_oport}</td>
+      <td style="color:#e8816e">${s.rc_oport}</td>
       <td style="color:#3498db">${s.mr_oport}</td>
       <td style="color:#f39c12">${s.sem_oport}</td>
       <td style="font-weight:600">${s.rc_oport+s.mr_oport+s.sem_oport}</td>
@@ -1051,7 +1062,7 @@ function renderTendencia() {
     rc_total: 'RC total', mr_total: 'MR total', sem_total: 'Egr. Sem.'
   };
   const values = data.map(r => trendMetric === 'pct_matric' ? r.pct_matric : r[trendMetric]);
-  const meta = parseInt(DATA.config.meta_matricula) || 1837;
+  const meta = parseInt(String(DATA.config.meta_matricula || '1837').replace(/\./g,'').replace(',','')) || 1837;
 
   document.getElementById('trend-title').textContent = `Evolución · ${metricLabels[trendMetric]} — Lima Norte`;
 
