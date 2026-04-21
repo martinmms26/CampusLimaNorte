@@ -144,6 +144,9 @@ body {
 .metric-card.accent-red   { border-top: 3px solid var(--red); }
 .metric-card.accent-navy  { border-top: 3px solid var(--navy); }
 .metric-card.accent-green { border-top: 3px solid var(--green); }
+.metric-card.accent-coral { border-top: 3px solid #e8816e; }
+.metric-card.accent-coral .metric-val { color: #b85a45; }
+.rc-year-badge { display:inline-block; font-size:10px; font-weight:600; padding:2px 7px; border-radius:10px; background:#fde8e4; color:#b85a45; margin-bottom:6px; }
 .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
 .metric-val { font-size: 28px; font-weight: 600; color: var(--text); line-height: 1; }
 .metric-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
@@ -797,7 +800,39 @@ function renderResumen() {
 
   // KPIs
   const oppTotal = oportunidad(latest);
+  const anioActual = new Date().getFullYear();
+  const hoyStr = new Date().toLocaleDateString('es-PE', { day:'numeric', month:'long' });
+  const pctRcEnIN = latest.rc_total > 0 ? ((latest.rc_in / latest.rc_total) * 100).toFixed(0) : 0;
+  const rcSinIN = latest.rc_total - latest.rc_in;
+
   document.getElementById('kpi-block').innerHTML = `
+    <div class="metric-card accent-coral" style="grid-column:1/-1">
+      <div class="rc-year-badge">Recién conversos · 1 ene ${anioActual} — ${hoyStr}</div>
+      <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap">
+        <div>
+          <div class="metric-label">Total bautizados</div>
+          <div class="metric-val">${latest.rc_total.toLocaleString()}</div>
+          <div class="metric-sub">últimos 365 días · aprox. año ${anioActual}</div>
+        </div>
+        <div style="border-left:1px solid var(--gray-mid);padding-left:20px">
+          <div class="metric-label">Registrados en Instituto</div>
+          <div class="metric-val" style="color:var(--green)">${latest.rc_in.toLocaleString()}</div>
+          <div class="metric-sub good">${pctRcEnIN}% del total RC</div>
+        </div>
+        <div style="border-left:1px solid var(--gray-mid);padding-left:20px">
+          <div class="metric-label">Sin matricular</div>
+          <div class="metric-val" style="color:#b85a45">${rcSinIN.toLocaleString()}</div>
+          <div class="metric-sub bad">Oportunidad inmediata</div>
+        </div>
+        <div style="flex:1;min-width:140px;align-self:center">
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:6px;font-weight:500">CAPTACIÓN RC EN IN</div>
+          <div style="height:8px;background:var(--gray);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pctRcEnIN}%;background:var(--teal);border-radius:4px;transition:width 0.6s"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px">Aprox. año en curso · dato exacto disponible en Opción B</div>
+        </div>
+      </div>
+    </div>
     <div class="metric-card accent-teal">
       <div class="metric-label">Universo total</div>
       <div class="metric-val">${latest.total.toLocaleString()}</div>
