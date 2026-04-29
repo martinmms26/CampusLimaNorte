@@ -427,6 +427,7 @@ function rB(){
 
 function rPr(){
   const lat=D.hist.length?D.hist[D.hist.length-1]:null;if(!lat){rv('prioridad');return;}
+  const anio=new Date().getFullYear();
   const cards=[
     {label:'Recién conversos (RC)',total:lat.rc_total,inIN:lat.rc_in,sin:lat.rc_oport,desc:'Bautizados últimos 365 días',color:C.red},
     {label:'Misioneros retornados',total:lat.mr_total,inIN:lat.mr_in,sin:lat.mr_oport,desc:'Liberados últimos 365 días',color:C.soft},
